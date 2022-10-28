@@ -1,0 +1,145 @@
+---
+title: "Estimating Exam Scores: Supervised Learning"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+author: Timmy Miller, MPS Candidate
+output:
+    html_document:
+        css: exams.css
+        toc: true
+        toc_float:
+            collapsed: false
+            smooth_scroll: false
+        toc_depth: 2
+        number_sections: false
+---
+```{r, include = FALSE}
+library(tidyverse)
+library(broom)
+library(ggfortify)
+
+exams <- read_csv("exams.csv")
+```
+
+
+---
+# Introduction
+Hi there! My name is Timmy and in this document I will be giving a walk-through on how to run basic
+supervised machine learning techniques on a dataset. The purpose of this document is to act as a guide to
+someone looking to run a supervised machine learning prediction on multiple variables.
+
+## Dataset
+[Link to Data](https://www.kaggle.com/datasets/whenamancodes/students-performance-in-exams)
+This dataset tracks the grades for 1000 students on 3 different tests: math, reading, and writing.
+The dataset also includes other categorical variables, including things like ethnicity and gender.  
+
+## Creating Dummy Variables
+Using the `glimpse()` code from `dplyr`, we can obtain the structure of the exam dataset.
+```{r, echo = FALSE}
+exams <- exams %>%
+    rename(
+        "race_ethnicity" = "race/ethnicity",
+        "parent_edu" = "parental level of education",
+        "math_score" = "math score",
+        "read_score" = "reading score",
+        "write_score" = "writing score",
+        "test_prep_course" = "test preparation course"
+    )
+glimpse(exams)
+```
+
+We can see that we have three numerical variables, `math_score`, `read_score`, and `write_score`.
+However, the rest of the variables are character or categorical values. It will be important to transform this categorical
+variables into "Dummy Variables", which means replacing each category with a numerical value. 
+The code I used to create these dummy variables for each category is shown below.
+
+* **Gender**
+    + Male = 1, Female = 0
+* **Race/Ethnicity**
+    + groupA = 1, groupB = 2, groupC = 3, groupD = 4, groupE = 5
+* **Parent Level of Education**
+    + some high school = 1, high school = 2, some college = 3, associate's degree = 4, bachelor's degree = 5, master's degree = 6
+* **Lunch**
+    + standard = 1, reduced/free = 0
+
+
+### Gender
+```{r Gender}
+exams_clean <- exams
+exams_clean$gender <- ifelse(exams_clean$gender == "male", 1, 0) 
+```
+### Race/Ethnicity
+```{r Race-Ethnicity}
+exams_clean$race_ethnicity <- ifelse(exams_clean$race_ethnicity == "group A", 1, exams_clean$race_ethnicity)
+exams_clean$race_ethnicity <- ifelse(exams_clean$race_ethnicity == "group B", 2, exams_clean$race_ethnicity)
+exams_clean$race_ethnicity <- ifelse(exams_clean$race_ethnicity == "group C", 3, exams_clean$race_ethnicity)
+exams_clean$race_ethnicity <- ifelse(exams_clean$race_ethnicity == "group D", 4, exams_clean$race_ethnicity)
+exams_clean$race_ethnicity <- ifelse(exams_clean$race_ethnicity == "group E", 5, exams_clean$race_ethnicity)
+
+exams_clean$race_ethnicity <- as.numeric(exams_clean$race_ethnicity)
+```
+### Parental Level of Education
+```{r Parent-Level-Education}
+exams_clean$parent_edu <- ifelse(exams_clean$parent_edu == "some high school", 1, exams_clean$parent_edu)
+exams_clean$parent_edu <- ifelse(exams_clean$parent_edu == "high school", 2, exams_clean$parent_edu)
+exams_clean$parent_edu <- ifelse(exams_clean$parent_edu == "some college", 3, exams_clean$parent_edu)
+exams_clean$parent_edu <- ifelse(exams_clean$parent_edu == "associate\'s degree", 4, exams_clean$parent_edu)
+exams_clean$parent_edu <- ifelse(exams_clean$parent_edu == "bachelor\'s degree", 5, exams_clean$parent_edu)
+exams_clean$parent_edu <- ifelse(exams_clean$parent_edu == "master\'s degree", 6, exams_clean$parent_edu)
+
+exams_clean$parent_edu <- as.numeric(exams_clean$parent_edu)
+```
+### Lunch
+```{r}
+exams_clean$lunch <- ifelse(exams_clean$lunch == "standard", 1, 0)
+exams_clean$lunch <- as.numeric(exams_clean$lunch)
+```
+### Test Prep Course 
+```{r}
+exams_clean$test_prep_course <- ifelse(exams_clean$test_prep_course == "completed", 1, 0)
+exams_clean$test_prep_course <- as.numeric(exams_clean$test_prep_course)
+```
+## Linear Model: Cumulative Exam Score Predictions
+We can quickly look at the `structure()` of our `exams_clean` dataset and see our new numerical dummy variables.
+```{r structure-new}
+str(exams_clean)
+```
+
+In this first step, we would like to see if we can predict what a person would obtain as a cumulative score over all three exams. 
+In other terms, `cum_score = math_score + read_score + write_score`. Before we can create a liner model, we must create a new 
+In R, we will be able to achieve this via the code:
+```{r cum-score}
+df1 <- exams_clean %>%
+    mutate(
+        cum_score = math_score + read_score + write_score
+    )
+df1 <- df1[-c(6:8)] # Removes individual scores
+```
+
+Now we would like to create a train set (set that we will train our model on), and a test set (will test the accuracy of our model). We can create the test set by calling a subset of the main dataset.
+In our case, we will just take out 100 'random' observations. Here is the code that I used in order to do so:
+
+```{r train-test1}
+test <- df1[250:350,]
+train <- df1[-c(250:350),]
+```
+
+Now, we can call the `lm()` function to create a linear regression with cumulative score as the response variable and all other variables as the independent variables.
+In the same chunk, we will also run the `summary()` function to get a good look at our new model.
+```{r lm1}
+lm1 <- lm(cum_score ~ ., data = train)
+summary(lm1)
+```
+
+One more important step is to ensure that their are no datapoints that are negatively affecting the 
+accuracy of our model due to high leverage or residuals. We can use the `autoplot()`
+function of the `ggfortify` package to create a 4x4 grid of plots to help us visualize our model.
+
+```{r autoplot, out.width = '50%', out.width= '.5', fig.cap = "Autoplot of lm1"}
+autoplot(lm1)
+```
+Our plots show that there are no high leverage or residual points.
+## Linear Model: Individual Exam Score Predictions
+
+### Math
+### Reading
+### Writing

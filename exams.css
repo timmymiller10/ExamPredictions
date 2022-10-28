@@ -1,0 +1,40 @@
+<style>
+h1.title{
+    color: #800000; 
+    background-color: #F5F5F5;
+    opacity: 0.6;
+    font-family: Calibri;
+    font-size: 40px;
+}
+h4.author{
+    color: #708090;
+    font-family: Calibri;
+}
+h4.date{
+    color: #708090
+    font-family: Calibri;
+}
+body{
+    color: black;
+    font-family: Calibri;
+    background-color:  silver;
+    font-size: 16px;
+}
+pre {
+    color: #708090;
+    background-color: #F8F8FF;
+    font-size: 12px;
+}
+#TOC {
+    color: black;
+    background-color: lightblue;
+    font-family: Calibri;
+    font-size; 16px;
+    border-color: black;
+}
+#header {
+    color: #black;
+    opacity: .8;
+    font-family: Calibri;
+    font-size: 22px;
+</style>
