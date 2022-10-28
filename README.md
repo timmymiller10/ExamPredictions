@@ -15,3 +15,5 @@ I will start by using a simply lm() model, followed by a model derived from the 
 ----
 
 ## About the author
+
+Hi! My name is Timmy Miller and I am a data scientist. I am currently studying to obtain my MPS in Analytics with a concentration in Applied Artificial Intelligence. I have a passion for the field of machine learning and hope to continue working in the field down the line.
