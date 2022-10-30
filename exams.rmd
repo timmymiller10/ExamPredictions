@@ -143,3 +143,6 @@ Our plots show that there are no high leverage or residual points.
 ### Math
 ### Reading
 ### Writing
+
+## Training a Cumulative Score Model using the caret package
+
